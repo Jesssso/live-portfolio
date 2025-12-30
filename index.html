@@ -37,14 +37,15 @@
 
 <script>
 // SAFE VERSION FOR GITHUB PAGES (NO EXTERNAL PRICE APIS)
-fetch('./ghostfolio-export-202512301927.json')
+fetch('ghostfolio-export-202512301927.json')
   .then(res => {
     if (!res.ok) throw new Error('JSON file not found');
     return res.json();
   })
   .then(data => {
+    console.log('JSON loaded', data);
     buildPortfolio(data.activities);
-    document.getElementById('status').textContent = 'Portfolio loaded successfully';
+    document.getElementById('status').textContent = `Portfolio loaded (${data.activities?.length || 0} trades)`;
   })
   .catch(err => {
     document.getElementById('status').textContent = 'Error loading data: ' + err.message;
@@ -89,4 +90,9 @@ function buildPortfolio(activities) {
 
 </body>
 </html>
+
+
+</body>
+</html>
+
 
