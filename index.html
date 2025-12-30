@@ -23,7 +23,15 @@
         <th class="p-3 text-right">Invested Value</th>
       </tr>
     </thead>
-    <tbody id="portfolio"></tbody>
+      <tbody id="portfolio"></tbody>
+      <tfoot class="bg-gray-900">
+        <tr>
+          <td class="p-3 font-bold">TOTAL</td>
+          <td></td>
+          <td></td>
+          <td id="totalValue" class="p-3 text-right font-bold"></td>
+        </tr>
+      </tfoot>
   </table>
 </div>
 
@@ -43,6 +51,7 @@ fetch('./ghostfolio-export-202512301927.json')
   });
 
 const holdings = {};
+const cryptoPrices = {};
 
 function buildPortfolio(activities) {
   activities.forEach(a => {
@@ -57,6 +66,8 @@ function buildPortfolio(activities) {
   const tbody = document.getElementById('portfolio');
   tbody.innerHTML = '';
 
+  let total = 0;
+
   Object.entries(holdings).forEach(([symbol, h]) => {
     const avg = h.cost / h.qty;
     const row = document.createElement('tr');
@@ -67,10 +78,15 @@ function buildPortfolio(activities) {
       <td class="p-3 text-right">$${avg.toFixed(2)}</td>
       <td class="p-3 text-right">$${h.cost.toLocaleString()}</td>
     `;
+    total += h.cost;
     tbody.appendChild(row);
+  });
+
+  document.getElementById('totalValue').textContent = '$' + total.toLocaleString();
   });
 }
 </script>
 
 </body>
 </html>
+
