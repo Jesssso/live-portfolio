@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Live Trade Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen p-6">
+
+  <h1 class="text-3xl font-bold mb-4">📈 My Live Trade Portfolio</h1>
+  <p class="text-gray-400 mb-6">Read‑only public view • Auto‑updates prices</p>
+
+  <div class="overflow-x-auto">
+    <table class="w-full border border-gray-800 rounded-lg overflow-hidden">
+      <thead class="bg-gray-900">
+        <tr>
+          <th class="p-3 text-left">Symbol</th>
+          <th class="p-3 text-right">Quantity</th>
+          <th class="p-3 text-right">Avg Buy</th>
+          <th class="p-3 text-right">Live Price</th>
+          <th class="p-3 text-right">Value</th>
+          <th class="p-3 text-right">P/L</th>
+        </tr>
+      </thead>
+      <tbody id="portfolio"></tbody>
+    </table>
+  </div>
+
+<script>
+// 1. LOAD YOUR JSON FILE (Ghostfolio Export)
+fetch('./ghostfolio-export-202512301927.json')
+  .then(res => res.json())
+  .then(data => buildPortfolio(data.activities));
+
+const holdings = {};
+
+function buildPortfolio(activities) {
+  activities.forEach(a => {
+    if (a.type !== 'BUY') return;
+    if (!holdings[a.symbol]) {
+      holdings[a.symbol] = { qty: 0, cost: 0 };
+    }
+    holdings[a.symbol].qty += a.quantity;
+    holdings[a.symbol].cost += a.quantity * a.unitPrice;
+  });
+
+  Object.keys(holdings).forEach(symbol => loadLivePrice(symbol));
+}
+
+// 2. FETCH LIVE PRICE (Yahoo Finance Proxy)
+function loadLivePrice(symbol) {
+  fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`)
+    .then(res => res.json())
+    .then(json => renderRow(symbol, json.quoteResponse.result[0]));
+}
+
+function renderRow(symbol, quote) {
+  const h = holdings[symbol];
+  const avg = h.cost / h.qty;
+  const price = quote?.regularMarketPrice || 0;
+  const value = price * h.qty;
+  const pl = value - h.cost;
+
+  const row = document.createElement('tr');
+  row.className = 'border-t border-gray-800';
+  row.innerHTML = `
+    <td class="p-3">${symbol}</td>
+    <td class="p-3 text-right">${h.qty.toLocaleString()}</td>
+    <td class="p-3 text-right">$${avg.toFixed(2)}</td>
+    <td class="p-3 text-right">$${price.toFixed(2)}</td>
+    <td class="p-3 text-right">$${value.toLocaleString()}</td>
+    <td class="p-3 text-right ${pl >= 0 ? 'text-green-400' : 'text-red-400'}">
+      $${pl.toLocaleString()}
+    </td>
+  `;
+
+  document.getElementById('portfolio').appendChild(row);
+}
+
+// 3. AUTO REFRESH EVERY 15 SECONDS
+setInterval(() => {
+  document.getElementById('portfolio').innerHTML = '';
+  Object.keys(holdings).forEach(symbol => loadLivePrice(symbol));
+}, 15000);
+</script>
+
+</body>
+</html>
